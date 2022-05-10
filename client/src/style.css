@@ -1,0 +1,43 @@
+body {
+    margin : 0;
+    font-family: Arsenal;
+}
+
+header {
+background-color: #154c79;
+color : white;
+margin-top : 0;
+padding : 0.5em;
+display: flex;
+}
+
+img {
+    height: 3em;
+    margin: 1em;
+}
+
+nav {
+    margin-top: 1em;
+    display : flex;
+    flex-flow: row wrap;
+    justify-content: center;
+    border-top: 0.2em solid rgb(207, 207, 207);
+    border-bottom: 0.2em solid rgb(207, 207, 207);
+
+}
+
+.router {
+    padding: 0.5em;
+    margin: 0;
+}
+
+a {
+    text-decoration: none;
+    color: rgb(105, 105, 105);
+    font-size: large;
+}
+
+a:hover {
+    color : #154c79;
+}
+

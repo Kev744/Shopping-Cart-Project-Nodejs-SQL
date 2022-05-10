@@ -1,41 +1,48 @@
-
 <!doctype>
 <html lang="fr">
+
 <head>
     <meta charset="utf-8">
-    <title>Mon magasin en ligne 100% bons plans</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bibliothèque EFREI</title>
     <!-- Load Vue followed by Vue Router -->
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/http-vue-loader/src/httpVueLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue-router/dist/vue-router.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue3-sfc-loader"></script>
-
+    <link href="src/style.css" rel="stylesheet">
+    <link href='https://fonts.googleapis.com/css?family=Arsenal' rel='stylesheet'>
+    <link rel="icon" href="src/logo_efrei.jpg">
 </head>
-<body>
-<div id="app">
-    <header>
-        <h1>À la bonne franquette</h1>
-        <nav>
-            <router-link to='/'>Accueil</router-link>
-            <router-link to='/cart'>Panier</router-link>
-            <router-link to="/login"> Login </router-link>
-            <router-link to="/logout"> Logout </router-link>
 
+<body>
+    <div id="app">
+        <header>
+            <img src="src/LOGO_EFREI-Blanc_Web.png" alt="logo">
+            <h1>Bienvenue sur la bibliothèque en ligne de l'EFREI</h1>
+
+        </header>
+        <nav>
+            <div class=router>
+                <router-link to='/'><a>Accueil</a></router-link>
+            </div>
+            <div class=router>
+                <router-link to='/cart'>Panier</router-link>
+            </div>
+            <div class=router>
+                <router-link to="/login"> Login </router-link>
+            </div>
+            <div class=router>
+                <router-link to="/logout"> Logout </router-link>
+            </div>
         </nav>
-    </header>
-    <main>
-        <router-view
-                :articles="articles"
-                :panier="panier"
-                :login="login"
-                @add-article="addArticle"
-                @delete-article="deleteArticle"
-                @update-article="updateArticle"
-                @add-cart="addToCart"
-        ></router-view>
-    </main>
-</div>
-<script type="module" src="vue-application.js"></script>
+        <main>
+            <router-view :articles="articles" :panier="panier" :login="login" @add-article="addArticle"
+                @delete-article="deleteArticle" @update-article="updateArticle" @add-cart="addToCart"></router-view>
+        </main>
+    </div>
+    <script type="module" src="vue-application.js"></script>
 </body>
+
 </html>
