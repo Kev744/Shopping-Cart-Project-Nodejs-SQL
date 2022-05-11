@@ -1,6 +1,6 @@
 module.exports = {
     host: "localhost",
     user: "root",
-    password: "Paconoustaimons",
+    password: "mettezvotremotdepasseici",
     db: "tp5"
 };
