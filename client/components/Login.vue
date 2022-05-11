@@ -51,12 +51,4 @@ module.exports = {
 </script>
 
 <style scoped>
-form {
-  margin: 1em;
-  display: column;
-}
-
-button {
-  padding: 10px;
-}
 </style>
