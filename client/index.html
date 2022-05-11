@@ -25,7 +25,7 @@
         </header>
         <nav>
             <div class=router>
-                <router-link to='/'><a>Accueil</a></router-link>
+                <router-link to='/'> Accueil </router-link>
             </div>
             <div class=router>
                 <router-link to='/cart'>Panier</router-link>
@@ -34,7 +34,7 @@
                 <router-link to="/login"> Login </router-link>
             </div>
             <div class=router>
-                <router-link to="/logout"> Logout </router-link>
+                <a href="#/login" @click="logout"> Logout </a>
             </div>
         </nav>
         <main>

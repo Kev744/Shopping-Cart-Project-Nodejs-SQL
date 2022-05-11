@@ -1,5 +1,6 @@
 <template>
-  <form @submit="checkData">
+  <div>
+  <form @submit.prevent="checkData">
     <input
       type="text"
       name="email"
@@ -14,6 +15,8 @@
     />
     <button type="submit">Connexion</button>
   </form>
+  <h3 v-if="correct"> Vous n'avez pas de compte, veuillez vous inscrire <a href="#/signup"> ici </a> s'il vous plaît </h3>
+  </div>
 </template>
 
 <script>
@@ -22,6 +25,7 @@ module.exports = {
 
   data() {
     return {
+      correct: false,
       login: {
         email: "",
         password: "",
@@ -41,11 +45,14 @@ module.exports = {
         }
         if (response.data.success === 0) {
           this.error = "Connexion Échouée";
+          this.correct = true;
         }
       } catch (err) {
+        this.correct = true;
         console.error("network error", err);
       }
     },
+
   },
 };
 </script>

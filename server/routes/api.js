@@ -30,13 +30,7 @@ function parseJwt (token) {
   return JSON.parse(jsonPayload);
 }
 
-router.use((req, res, next) => {
-  // l'utilisateur n'est pas reconnu, lui attribuer un panier dans req.session
-  if (typeof req.session.panier === 'undefined') {
-    req.session.panier = new Panier()
-  }
-  next()
-})
+
 
 router.use((req, res, next) => {
   // l'utilisateur n'est pas reconnu, lui attribuer un panier dans req.session

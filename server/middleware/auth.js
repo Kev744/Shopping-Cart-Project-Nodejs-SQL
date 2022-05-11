@@ -4,7 +4,7 @@ const db = require("../models/db");
 
 module.exports = (router) => {
     router.post('/signup', (req, res) => {
-        bcrypt.hash(req.body.password,10).then(hash => { const user = db.query("INSERT INTO users (email, password) VALUES (?)", [[req.body.email, hash]], function (err,result) { if (err) throw err;
+        bcrypt.hash(req.body.password,10).then(hash => { const user = db.query("INSERT INTO users (email, password, admin) VALUES (?)", [[req.body.email, hash, req.body.admin]], function (err,result) { if (err) throw err;
             console.log(result);
             res.status(201).json({message: 'Nous sommes heureux de vous accueillir'})
         })})
@@ -34,7 +34,8 @@ router.post('/login', (req, res) => {
 
 
                 const userId = user[0].id_user;
-                const token = jwt.sign({ userId: user[0].id_user },
+                const token = jwt.sign({ userId: user[0].id_user,
+                                                admin: user[0].admin},
                     'RANDOM_TOKEN_SECRET',
                     { expiresIn: '24h' });
                 res.header("Authorization","Bearer " + token)
