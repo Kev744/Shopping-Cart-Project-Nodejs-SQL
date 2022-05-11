@@ -66,6 +66,13 @@ const app = new Vue({
       await axios.delete('/api/article/' + articleId)
       const index = this.articles.findIndex(a => a.id === articleId)
       this.articles.splice(index, 1)
+    },
+    async logout() {
+      try {
+        await axios.get('/api/logout')
+
+      }
+      catch(err) {console.error("network error",err)}
     }
   }
 })

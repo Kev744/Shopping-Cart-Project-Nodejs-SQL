@@ -1,19 +1,12 @@
 const express = require('express')
 const router = express.Router()
-const articles = require('../data/articles.js')
 const db = require('../models/db.js')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const auth = require('../middleware/auth.js')
 
 
-class Panier {
-  constructor () {
-    this.createdAt = new Date()
-    this.updatedAt = new Date()
-    this.articles = []
-  }
-}
+
 
 /**
  * Dans ce fichier, vous trouverez des exemples de requêtes GET, POST, PUT et DELETE
@@ -215,6 +208,8 @@ router.route('/article')
   }
 
 
+
+
   db.query("INSERT INTO articles (name, description, price, image, quantite) VALUES (?)", [[req.name, req.description, req.price, req.image, req.quantite]], function (err,result) { if (err) throw err;
     console.log(result);
 
@@ -285,6 +280,7 @@ router.route('/panier/:articleId')
 
 
 
+
       // on envoie l'article ajouté à l'utilisateur
       res.status(200).json({message: "Good!"})
     })})
@@ -296,7 +292,7 @@ router.route('/panier')
     .get(parseArticle, (req,res) => {
 
       let token = req.headers['x-access-token'] || req.headers['authorization']  || req.cookies.token;
-      console.log(parseJwt(token).userId)
+      console.log(parseJwt(token))
       db.query("SELECT * FROM panier_item WHERE iduser = (?)", [parseJwt(token).userId], function (err,result) {
         if (err) throw err;
         console.log(result);
