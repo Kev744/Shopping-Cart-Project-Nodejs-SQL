@@ -1,7 +1,20 @@
 <template>
 
   <div>
-    <article v-for="article in articles" :key="article.id_article">
+    <input type="text" id="search" placeholder="Quelle livre souhaitez-vous ?" v-model="search" @change="findBook">
+    <div v-if="searchSucceed">
+      <div class="article-img">
+        <div :style="{ backgroundImage: 'url(' + searchArticle.image + ')' }">
+        </div>
+      </div>
+      <div class="article-content">
+        <div class="article-title">
+          <h2>{{ searchArticle.name }} - {{ searchArticle.price }}€ - {{ searchArticle.quantite }}</h2>
+          <h3> {{searchArticle.description}} </h3>
+        </div>
+      </div>
+    </div>
+    <article v-for="article in articles" :key="article.id_article" v-if="!searchSucceed">
       <div class="article-img">
         <div :style="{ backgroundImage: 'url(' + article.image + ')' }">
         </div>
@@ -12,8 +25,8 @@
 
           <div>
           <button @click="addToCart(article.id_article)"> Ajouter au panier </button>
-          <button @click="deleteArticle(article.id_article)">Supprimer</button>
-          <button @click="editArticle(article)">Modifier</button>
+          <button v-if="administration " @click="deleteArticle(article.id_article)">Supprimer</button>
+          <button v-if="administration" @click="editArticle(article)">Modifier</button>
           </div>
         </div>
         <p>{{ article.description }}</p>
@@ -31,7 +44,9 @@
         <input type="text" v-model="editingArticle.image" placeholder="Lien vers l'image">
       </div>
     </article>
-  <add-article @add-article="addArticle"/>
+    {{administration}}
+
+    <add-article v-if="administration" @add-article="addArticle"/>
   </div>
 
 
@@ -42,12 +57,22 @@
 module.exports = {
   props: {
     articles: { type: Array, default() {return [] }},
-    panier: { type: Object }
+    panier: { type: Object },
+    administration : { type: Boolean }
   },
   components: {"AddArticle" : window.httpVueLoader('./components/AddArticle.vue')},
 
   data () {
     return {
+      search: '',
+      searchSucceed : false,
+      searchArticle: {
+        name: '',
+        description: '',
+        image: '',
+        price: 0,
+        quantite: 0,
+      },
       editingArticle: {
         id: '',
         name: '',
@@ -92,7 +117,23 @@ module.exports = {
         quantite : 0
       }
     },
-  }
+    async findBook () {
+      try {
+        let data = this.articles.filter(d => d.name.toUpperCase() === this.search.toUpperCase())
+        let id = data[0]["id_article"];
+        let search = await axios.get('/api/article/' + id);
+        this.searchArticle.name = search["data"][0]["name"];
+        this.searchArticle.description = search["data"][0]["description"];
+        this.searchArticle.image = search["data"][0]["image"];
+        this.searchArticle.price = search["data"][0]["price"];
+        this.searchArticle.quantite = search["data"][0]["quantite"];
+        this.searchSucceed = true;
+        }
+      catch (error) {
+        console.log(error)
+      }
+    }
+    }
 }
 </script>
 

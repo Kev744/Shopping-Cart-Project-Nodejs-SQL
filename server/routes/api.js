@@ -8,27 +8,38 @@ const auth = require('../middleware/auth.js')
 
 
 
+
 /**
  * Dans ce fichier, vous trouverez des exemples de requêtes GET, POST, PUT et DELETE
  * Ces requêtes concernent l'ajout ou la suppression d'articles sur le site
  * Votre objectif est, en apprenant des exemples de ce fichier, de créer l'API pour le panier de l'utilisateur
  *
  * Notre site ne contient pas d'authentification, ce qui n'est pas DU TOUT recommandé.
- * De même, les informations sont réinitialisées à chaque redémarrage du serveur, car nous n'avons pas de système de base de données pour faire persister les données
+ * De même, les informations sont réinitialisées à chaque redémarrage du serveur, car nous n'avons pas de système de
+ * base de données pour faire persister les données
  */
 
 /**
- * Notre mécanisme de sauvegarde des paniers des utilisateurs sera de simplement leur attribuer un panier grâce à req.session, sans authentification particulière
+ * Notre mécanisme de sauvegarde des paniers des utilisateurs sera de simplement leur attribuer un panier grâce à
+ * req.session, sans authentification particulière
  */
 function parseJwt (token) {
   var base64Url = token.split('.')[1];
   var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-  var jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+  var jsonPayload = decodeURIComponent(global.atob(base64).split('').map(function(c) {
     return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
   }).join(''));
 
   return JSON.parse(jsonPayload);
 }
+
+function isAdmin(token) {
+  if(parseJwt(token).admin === 1) {
+    return true;
+  }
+  return false;
+}
+
 
 
 
@@ -135,7 +146,7 @@ function parseArticle (req, res, next) {
   req.quantite = quantite;
 
 
-  let token = req.headers['x-access-token'] || req.headers['authorization']  || req.cookies.token;
+  var token = req.headers['x-access-token'] || req.headers['authorization']  || req.cookies.token;
   if (!!token && token.startsWith('Bearer ')) {
     token = token.slice(7, token.length);
   }
@@ -150,7 +161,6 @@ function parseArticle (req, res, next) {
         req.decoded = decoded;
         console.log(userId)
 
-
         const newToken  = jwt.sign({
               user : decoded.user
             },
@@ -161,16 +171,12 @@ function parseArticle (req, res, next) {
 
         res.header('Authorization', 'Bearer ' + newToken);
         res.cookie("token", token, {httpOnly: true})
-
         next();
       }
     });
   } else {
     return res.status(400).json('token_required');
   }
-
-
-
  }
 
 
@@ -180,6 +186,14 @@ function parseArticle (req, res, next) {
  * NOTE: lorsqu'on redémarre le serveur, l'article ajouté disparait
  *   Si on voulait persister l'information, on utiliserait une BDD (mysql, etc.)
  */
+
+router.route('/admin')
+    .get(parseArticle, (req,res) =>  {
+        let token = req.headers['x-access-token'] || req.headers['authorization']  || req.cookies.token;
+        let result = isAdmin(token)
+        res.status(200).json(result)
+    })
+
 router.route('/article')
 
 .get(parseArticle,(req, res) => {
@@ -188,8 +202,6 @@ router.route('/article')
 })
 
 .post(parseArticle, (req, res) => {
-
-
 
   // vérification de la validité des données d'entrée
   if (typeof req.name !== 'string' || req.name === '' ||
@@ -204,11 +216,14 @@ router.route('/article')
 
 
 
-  db.query("INSERT INTO articles (name, description, price, image, quantite) VALUES (?)", [[req.name, req.description, req.price, req.image, req.quantite]], function (err,result) { if (err) throw err;
-    console.log(result);
+  db.query("INSERT INTO articles (name, description, price, image, quantite) VALUES (?)",
+      [[req.name, req.description, req.price, req.image, req.quantite]],
+      function (err, result) {
+        if (err) throw err;
+        console.log(result);
 
 
-  });
+      });
 
   db.query("SELECT * FROM articles ORDER BY id_article DESC LIMIT 1", function (err,result) { if (err) throw err;
     res.status(200).json(result)});
@@ -216,6 +231,7 @@ router.route('/article')
 
   // on envoie l'article ajouté à l'utilisateur
 });
+
 
 
 router.route('/article/:articleId')
@@ -260,24 +276,44 @@ router.route('/panier/:articleId')
     .post(parseArticle, (req,res) => {
 
 
-      db.query("SELECT * FROM articles WHERE id_article = ?", [[ req.articleId]], function (err,result) {
-        if (err) throw err;
 
 
-        let token = req.headers['x-access-token'] || req.headers['authorization']  || req.cookies.token;
+      db.query("SELECT * FROM articles WHERE id_article = ?",
+          [[req.articleId]],
+          function (err, result) {
+              if (err) throw err;
+
+              let quantity = result[0].quantite - 1;
+              if (result[0].quantite < 1) {
+              } else {
+                  db.query("UPDATE articles SET quantite = ? WHERE id_article = ?", [quantity, req.articleId], function (err, result) {
+                      if (err) throw err;
+                  })
+
+                  let token = req.headers['x-access-token'] || req.headers['authorization'] || req.cookies.token;
+
+                  db.query("SELECT quantite FROM panier_item WHERE id_article = ? AND id_user = ?", [req.articleId, parseJwt(token).userId], function (err, result) {
+                      if (err) throw err;
+                      console.log(result[0])
+                      if (result[0] === undefined) {
+                          db.query("INSERT INTO panier_item(id_article,id_user,quantite) VALUES (?)", [[req.articleId, parseJwt(token).userId, 1]], function (err, result) {
+                              if (err) throw err;
+                          })
+                      } else {
+                          db.query("UPDATE panier_item SET quantite = ? WHERE id_article = ? AND id_user = ?", [result[0].quantite + 1, req.articleId, parseJwt(token).userId], function (err, result) {
+                              if (err) throw err;
+                          })
+                      }
+                  })
+              }
 
 
-              db.query("INSERT INTO panier_item(id_article,image,name,description,price,iduser) VALUES (?)", [[req.articleId,result[0].image, result[0].name, result[0].description, result[0].price, parseJwt(token).userId]], function (err,result)
-              {if (err) throw err;})
-
-
-
-
-
-
-      // on envoie l'article ajouté à l'utilisateur
-      res.status(200).json({message: "Good!"})
-    })})
+              // on envoie l'article ajouté à l'utilisateur
+              res.status(200).json({message: "Good!"})
+          }
+      )
+    }
+ )
 
 
 router.route('/panier')
@@ -287,7 +323,7 @@ router.route('/panier')
 
       let token = req.headers['x-access-token'] || req.headers['authorization']  || req.cookies.token;
       console.log(parseJwt(token))
-      db.query("SELECT * FROM panier_item WHERE iduser = (?)", [parseJwt(token).userId], function (err,result) {
+      db.query("SELECT * FROM articles INNER JOIN panier_item ON articles.id_article = panier_item.id_article WHERE id_user = (?)", [parseJwt(token).userId], function (err,result) {
         if (err) throw err;
         console.log(result);
 

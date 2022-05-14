@@ -26,6 +26,7 @@ const app = new Vue({
   el: '#app',
   data: {
     articles: [],
+    administration : false,
     panier: {
       createdAt: null,
       updatedAt: null,
@@ -39,6 +40,8 @@ const app = new Vue({
     }
   },
   async mounted () {
+    const res3 = await axios.get('/api/admin')
+    this.administration = res3.data
     const res = await axios.get('/api/article')
     this.articles = res.data
     const res2 = await axios.get('/api/panier')

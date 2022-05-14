@@ -38,7 +38,7 @@
             </div>
         </nav>
         <main>
-            <router-view :articles="articles" :panier="panier" :login="login" @add-article="addArticle"
+            <router-view :administration="administration" :articles="articles" :panier="panier" :login="login"  @add-article="addArticle"
                 @delete-article="deleteArticle" @update-article="updateArticle" @add-cart="addToCart"></router-view>
         </main>
     </div>

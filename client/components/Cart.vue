@@ -9,7 +9,7 @@
       <div class="article-content">
         <div class="article-title">
           <h2>{{ article.name }} - {{ article.price }}€ </h2>
-          <p> {{ article.description }}</p>
+          <p> {{ article.description }} - {{article.quantite}}</p>
         </div>
       </div>
     </article>
@@ -19,7 +19,8 @@
 module.exports = {
   props: {
     articles: { type: Array, default: [] },
-    panier: { type: Object}
+    panier: { type: Object},
+    administration : { type: Boolean}
   },
   data () {
     return {
