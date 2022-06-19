@@ -50,7 +50,12 @@ const app = new Vue({
   methods: {
     async addToCart (articleId) {
       const res = await axios.post('/api/panier/' + articleId)
-      this.panier.articles.push(res.data.articles)
+      this.panier.articles.push(res.data)
+    },
+    async deleteItem (itemId) {
+      await axios.delete('/api/panier/' + itemId)
+      const index = this.panier.articles.findIndex(a => a.idpanieritem === itemId)
+      this.panier.articles.splice(index, 1)
     },
     async addArticle (article) {
       const res = await axios.post('/api/article', article)
@@ -62,7 +67,7 @@ const app = new Vue({
       article.name = newArticle.name
       article.description = newArticle.description
       article.image = newArticle.image
-      article.price = newArticle.price
+      article.author = newArticle.author
       article.quantite = newArticle.quantite
     },
     async deleteArticle (articleId) {

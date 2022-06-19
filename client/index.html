@@ -27,9 +27,8 @@
             <div class=router>
                 <router-link to='/'> Accueil </router-link>
             </div>
-            <div class=router>
-                <router-link to='/cart'>Panier</router-link>
-            </div>
+                <router-link v-if="!administration" v-bind:style="[ administration ? { } : {'padding' : '0.5em', 'margin' : '0'} ]" to='/cart'>Panier</router-link>
+
             <div class=router>
                 <router-link to="/login"> Login </router-link>
             </div>
@@ -39,7 +38,7 @@
         </nav>
         <main>
             <router-view :administration="administration" :articles="articles" :panier="panier" :login="login"  @add-article="addArticle"
-                @delete-article="deleteArticle" @update-article="updateArticle" @add-cart="addToCart"></router-view>
+                @delete-article="deleteArticle" @update-article="updateArticle" @add-cart="addToCart" @delete-item="deleteItem"></router-view>
         </main>
     </div>
     <script type="module" src="vue-application.js"></script>

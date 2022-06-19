@@ -52,70 +52,6 @@ router.use((req, res, next) => {
 
 
 
-/*
- * Cette route doit retourner le panier de l'utilisateur, grâce à req.session
- */
-
-/*
- * Cette route doit ajouter un article au panier, puis retourner le panier modifié à l'utilisateur
- * Le body doit contenir l'id de l'article, ainsi que la quantité voulue
- */
-
-
-
-/*
- * Cette route doit permettre de confirmer un panier, en recevant le nom et prénom de l'utilisateur
- * Le panier est ensuite supprimé grâce à req.session.destroy()
- */
-router.post('/panier/pay', (req, res) => {
-const LastName = req.body.nom;
-const firstName = req.body.prenom;
-
-if(req.session.panier !== undefined) {
-  req.session.destroy();
-  res.status(200).json("Merci " + firstName + " " + LastName + " " + "pour votre achat")
-}
-
-})
-
-/*
- * Cette route doit permettre de changer la quantité d'un article dans le panier
- * Le body doit contenir la quantité voulue
- */
-router.put('/panier/:articleId', (req, res) => {
-  const articleId = parseInt(req.params.articleId)
-  const quantite = parseInt(req.body.quantite)
-
-  if(req.session.panier.articles.find(a => a.id === articleId) === undefined) { res.status(404).json({ message: 'Ohnon, cela ne sera pas possible, pas dans le panier' })
-    return }
-
-  if(isNaN(quantite) || quantite <= 0) { res.status(404).json( {message : "Pas de quantité nulle ou négative"})
-  return; }
-
-    const modArticle = req.session.panier.articles.find(a => a.id === articleId)
-    modArticle.quantite = quantite
-
-  res.status(200).json(req.session.panier)
-})
-
-/*
- * Cette route doit supprimer un article dans le panier
- */
-router.delete('/panier/:articleId', (req, res) => {
-  const articleId = parseInt(req.params.articleId)
-
-  const supArticle = req.session.panier.articles.find(a => a.id === articleId)
-
-
-
-  if (supArticle === undefined) {res.status(400).json({message: "Cet article n'est pas dans le panier"})
-  return;}
-
-  else {req.session.panier.articles.splice(supArticle,1)}
-
-  res.status(200).json(req.session.panier)
-})
-
 
 /**
  * Cette route envoie l'intégralité des articles du site
@@ -129,21 +65,23 @@ router.delete('/panier/:articleId', (req, res) => {
  * - DELETE /article/:articleId
  * Comme ces trois routes ont un comportement similaire, on regroupe leurs fonctionnalités communes dans un middleware
  */
-function parseArticle (req, res, next) {
+function Authentification (req, res, next) {
 
 
   const name = req.body.name
   const description = req.body.description
   const image = req.body.image
-  const price = parseInt(req.body.price)
+  const author = req.body.author
   const articleId = parseInt(req.params.articleId)
   const quantite = parseInt(req.body.quantite)
+  const itemId = parseInt(req.params.itemId)
   req.articleId = articleId;
   req.name = name;
   req.image = image;
   req.description = description;
-  req.price = price;
+  req.author = author;
   req.quantite = quantite;
+  req.itemId = itemId;
 
 
   var token = req.headers['x-access-token'] || req.headers['authorization']  || req.cookies.token;
@@ -159,7 +97,6 @@ function parseArticle (req, res, next) {
       } else {
         var userId = decoded.userId
         req.decoded = decoded;
-        console.log(userId)
 
         const newToken  = jwt.sign({
               user : decoded.user
@@ -188,7 +125,7 @@ function parseArticle (req, res, next) {
  */
 
 router.route('/admin')
-    .get(parseArticle, (req,res) =>  {
+    .get(Authentification, (req,res) =>  {
         let token = req.headers['x-access-token'] || req.headers['authorization']  || req.cookies.token;
         let result = isAdmin(token)
         res.status(200).json(result)
@@ -196,18 +133,18 @@ router.route('/admin')
 
 router.route('/article')
 
-.get(parseArticle,(req, res) => {
+.get(Authentification,(req, res) => {
   db.query("SELECT * FROM articles", function (err,result) { if (err) throw err;
     res.status(200).json(result)});
 })
 
-.post(parseArticle, (req, res) => {
+.post(Authentification, (req, res) => {
 
   // vérification de la validité des données d'entrée
   if (typeof req.name !== 'string' || req.name === '' ||
       typeof req.description !== 'string' || req.description === '' ||
       typeof req.image !== 'string' || req.image === '' ||
-      isNaN(req.price) || req.price <= 0 ||
+      typeof req.author !== 'string' || req.author === '' ||
       isNaN(req.quantite) || req.quantite <= 0) {
     res.status(400).json({ message: 'bad request' })
     return
@@ -216,20 +153,15 @@ router.route('/article')
 
 
 
-  db.query("INSERT INTO articles (name, description, price, image, quantite) VALUES (?)",
-      [[req.name, req.description, req.price, req.image, req.quantite]],
+  db.query("INSERT INTO articles (name, description, author, image, quantite) VALUES (?)",
+      [[req.name, req.description, req.author, req.image, req.quantite]],
       function (err, result) {
         if (err) throw err;
-        console.log(result);
-
-
       });
 
   db.query("SELECT * FROM articles ORDER BY id_article DESC LIMIT 1", function (err,result) { if (err) throw err;
     res.status(200).json(result)});
 
-
-  // on envoie l'article ajouté à l'utilisateur
 });
 
 
@@ -238,94 +170,148 @@ router.route('/article/:articleId')
   /**
    * Cette route envoie un article particulier
    */
-  .get(parseArticle, (req, res) => {
+  .get(Authentification, (req, res) => {
     // req.article existe grâce au middleware parseArticle
     db.query("SELECT *  FROM articles WHERE id_article = (?)", [req.articleId], function (err,result) { if (err) throw err;
-      console.log(result);
       res.json(result)
     })
 
   })
 
-  /**
-   * Cette route modifie un article.
-   * WARNING: dans un vrai site, elle devrait être authentifiée et valider que l'utilisateur est bien autorisé
-   * NOTE: lorsqu'on redémarre le serveur, la modification de l'article disparait
-   *   Si on voulait persister l'information, on utiliserait une BDD (mysql, etc.)
-   */
-  .put(parseArticle, (req, res) => {
 
-    db.query("UPDATE articles SET name = ?, description = ?, price = ?, image = ?, quantite = ? WHERE id_article = ?", [req.name, req.description, req.price, req.image, req.quantite, req.articleId], function (err,result) { if (err) throw err;
+  .put(Authentification, (req, res) => {
+
+    db.query("UPDATE articles SET name = ?, description = ?, author = ?, image = ?, quantite = ? WHERE id_article = ?", [req.name, req.description, req.author, req.image, req.quantite, req.articleId], function (err,result) { if (err) throw err;
       console.log(result);})
 
     res.json({message: "Propre"})
 
 })
 
-  .delete(parseArticle, (req, res) => {
+  .delete(Authentification, (req, res) => {
 
     db.query("DELETE FROM articles WHERE id_article = (?)", [req.articleId], function (err,result) { if (err) throw err;
       console.log(result);})
 
   res.json({message: "Propre"})})
 
+let set = [];
 
+function updateData(tab,cart,result){
+    let obj = tab.find(o => o.id === result[0].id_article);
+
+    if(obj!== undefined && obj !== null){
+        obj.count += 1;
+    } else {
+        tab.push(cart);
+    }}
+
+function stopData(tab,cart,result){
+    let obj = tab.find(o => o.id === result[0].id_article);
+
+    if(obj!== undefined && obj !== null){
+        obj.count -= 1;
+    } else {
+        tab.push(cart);
+    }}
 router.route('/panier/:articleId')
 
 
-    .post(parseArticle, (req,res) => {
+    .post(Authentification, (req,res, next) => {
+            let token = req.headers['x-access-token'] || req.headers['authorization'] || req.cookies.token;
+
+            db.query("SELECT * FROM panier WHERE id_user = ?", [parseJwt(token).userId], function (err, cart) {
+                if(err) throw err;
+                if(cart[0] === undefined) { db.query("INSERT INTO panier(id_user, date_crea) VALUES (?)", [[parseJwt(token).userId, new Date()]], function (err, cart) {
+                    if (err) throw err;
+                })}
 
 
 
-
-      db.query("SELECT * FROM articles WHERE id_article = ?",
+        db.query("SELECT * FROM articles WHERE id_article = ?",
           [[req.articleId]],
           function (err, result) {
               if (err) throw err;
+              let cart = {id : result[0].id_article, count : 1};
 
-              let quantity = result[0].quantite - 1;
-              if (result[0].quantite < 1) {
-              } else {
-                  db.query("UPDATE articles SET quantite = ? WHERE id_article = ?", [quantity, req.articleId], function (err, result) {
-                      if (err) throw err;
-                  })
+              let quantity = result[0].quantite;
 
                   let token = req.headers['x-access-token'] || req.headers['authorization'] || req.cookies.token;
 
-                  db.query("SELECT quantite FROM panier_item WHERE id_article = ? AND id_user = ?", [req.articleId, parseJwt(token).userId], function (err, result) {
+                  db.query("SELECT quantite FROM panier_item WHERE id_article = ? AND id_user = ?", [req.articleId, parseJwt(token).userId], function (err, resultat) {
                       if (err) throw err;
-                      console.log(result[0])
-                      if (result[0] === undefined) {
-                          db.query("INSERT INTO panier_item(id_article,id_user,quantite) VALUES (?)", [[req.articleId, parseJwt(token).userId, 1]], function (err, result) {
+                      if(quantity > 0) {
+                          if (resultat[0] === undefined) {
+                              updateData(set, cart, result)
+                              db.query("INSERT INTO panier_item(id_article,id_user,quantite) VALUES (?)", [[req.articleId, parseJwt(token).userId, 1]], function (err, result) {
                               if (err) throw err;
-                          })
-                      } else {
-                          db.query("UPDATE panier_item SET quantite = ? WHERE id_article = ? AND id_user = ?", [result[0].quantite + 1, req.articleId, parseJwt(token).userId], function (err, result) {
+                          })}
+                       else {
+
+                                  updateData(set, cart, result)
+                                  if (set.find(a => a.id === req.articleId).count <= quantity) {
+                          db.query("UPDATE panier_item SET quantite = ? WHERE id_article = ? AND id_user = ?", [resultat[0].quantite + 1, req.articleId, parseJwt(token).userId], function (err, result) {
                               if (err) throw err;
-                          })
-                      }
-                  })
-              }
+                          })}}}
+                                  else {stopData(set, cart, result)
+                                        }
+})})
+    })})
 
 
-              // on envoie l'article ajouté à l'utilisateur
-              res.status(200).json({message: "Good!"})
-          }
-      )
+
+
+
+router.route('/verif')
+
+.get(Authentification, (req,res) => {
+
+        let token = req.headers['x-access-token'] || req.headers['authorization'] || req.cookies.token;
+        db.query("SELECT * FROM panier_item WHERE id_user = ?", [parseJwt(token).userId], function (err, results) {
+    if(err) throw err;
+    for(let i= 0; i < results.length; i++) {
+        let articleId = results[i]["id_article"];
+
+        db.query("SELECT * FROM articles WHERE id_article = ?", [articleId], function (err, number) {
+            if(err) throw err;
+            let Article = set.find(a => a.id === articleId)
+                if(  Article !== undefined ) {let popArticle = set.find(a => a.id === articleId).count;
+            db.query("UPDATE articles SET quantite = ? WHERE id_article = ?", [number[0].quantite - popArticle , articleId], function (err) {
+                set = []
+
+
+            })}
+
+        })
+
     }
- )
+
+    }
+    )
+        db.query("SELECT * FROM articles", function (err,result) { if (err) throw err;
+
+            res.status(200).json(result)});
+            })
+
+router.route('/panier/:itemId')
+
+
+    .delete(Authentification, (req, res) => {
+        let token = req.headers['x-access-token'] || req.headers['authorization'] || req.cookies.token;
+        db.query("DELETE FROM panier_item  WHERE id_user = ? AND idpanieritem = ?", [parseJwt(token).userId, req.itemId], function (err, results) {
+            if(err) throw err;
+        })
+        res.status(200).json({message: "Propre"})})
 
 
 router.route('/panier')
 
 
-    .get(parseArticle, (req,res) => {
+    .get(Authentification, (req,res) => {
 
       let token = req.headers['x-access-token'] || req.headers['authorization']  || req.cookies.token;
-      console.log(parseJwt(token))
       db.query("SELECT * FROM articles INNER JOIN panier_item ON articles.id_article = panier_item.id_article WHERE id_user = (?)", [parseJwt(token).userId], function (err,result) {
         if (err) throw err;
-        console.log(result);
 
         res.status(200).json(result)
       })})

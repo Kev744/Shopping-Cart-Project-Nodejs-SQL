@@ -5,10 +5,14 @@ const cookieParser = require('cookie-parser')
 const logger = require('morgan')
 const mysql = require('mysql')
 
+
+
 const apiRouter = require('./routes/api.js')
 const db = require('./models/db.js')
 
 const app = express()
+
+
 
 
 app.use(logger('dev'))

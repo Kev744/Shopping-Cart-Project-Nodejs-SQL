@@ -1,21 +1,22 @@
 <template>
   <div>
-  <form @submit.prevent="checkData">
-    <input
-      type="text"
-      name="email"
-      v-model="login.email"
-      placeholder="Entrez votre adresse-mail"
-    />
-    <input
-      type="text"
-      name="password"
-      v-model="login.password"
-      placeholder="Entrez votre mot de passe"
-    />
-    <button type="submit">Connexion</button>
-  </form>
-  <h3 v-if="correct"> Vous n'avez pas de compte, veuillez vous inscrire <a href="#/signup"> ici </a> s'il vous plaît </h3>
+    <form @submit.prevent="checkData">
+      <h2>Entrez vos identifiants</h2>
+      <input
+          type="email"
+          name="email"
+          v-model="login.email"
+          placeholder="Entrez votre adresse-mail"
+      />
+      <input
+          type="password"
+          name="password"
+          v-model="login.password"
+          placeholder="Entrez votre mot de passe"
+      />
+      <button type="submit">Connexion</button>
+    </form>
+    <h3 v-if="correct"> Vous n'avez pas de compte, veuillez vous inscrire <a href="#/signup"> ici </a> s'il vous plaît </h3>
   </div>
 </template>
 
@@ -58,4 +59,37 @@ module.exports = {
 </script>
 
 <style scoped>
+
+
+form {
+  position: relative;
+  display: flex;
+  flex-flow: column nowrap;
+  margin: 5em auto;
+  width: 80% ;
+  padding: 2em;
+  background-color: #247cc4;
+  border-radius: 25px;
+}
+
+input {
+
+  width: 50%;
+  height: 2em;
+  margin: 1em;
+  border-radius: 25px;
+  padding : 0.5em
+}
+button {
+  position: relative;
+  width: 20%;
+  height: 4em;
+  margin: 1em;
+  border-radius: 25px;
+  padding : 1em
+}
+h3 {
+  position: relative;
+  margin: 5em;
+}
 </style>

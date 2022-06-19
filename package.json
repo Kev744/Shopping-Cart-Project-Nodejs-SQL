@@ -6,6 +6,7 @@
     "start": "node ./bin/www"
   },
   "dependencies": {
+    "alert": "^5.0.10",
     "axios": "^0.26.1",
     "bcrypt": "^5.0.1",
     "cookie-parser": "~1.4.4",

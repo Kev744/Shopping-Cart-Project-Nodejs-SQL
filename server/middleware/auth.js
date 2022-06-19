@@ -4,7 +4,7 @@ const db = require("../models/db");
 
 module.exports = (router) => {
     router.post('/signup', (req, res) => {
-        bcrypt.hash(req.body.password,10).then(hash => { const user = db.query("INSERT INTO users (email, password, admin) VALUES (?)", [[req.body.email, hash, req.body.admin]], function (err,result) { if (err) throw err;
+        bcrypt.hash(req.body.password,10).then(hash => { const user = db.query("INSERT INTO users (email, password, nom, prenom, admin) VALUES (?)", [[req.body.email, hash, req.body.nom, req.body.prenom, req.body.admin]], function (err,result) { if (err) throw err;
             console.log(result);
             res.status(201).json({message: 'Nous sommes heureux de vous accueillir'})
         })})
@@ -13,7 +13,7 @@ module.exports = (router) => {
 router.post('/login', (req, res) => {
     function runQuery(sqlQuery, args){
         return new Promise(function (resolve, reject) {
-            db.query(sqlQuery, args, function(error, results, fields) {
+            db.query(sqlQuery, args, function(error, results) {
                 if (error) reject(error);
                 else resolve(results);
             });
