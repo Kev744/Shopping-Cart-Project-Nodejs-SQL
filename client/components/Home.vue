@@ -14,7 +14,7 @@
           </div>
           <p> {{searchArticle.description}} </p>
         </div>
-        <button v-if="!administration"  @click="addToCart(searchArticle.id)"> Ajouter au panier </button>
+        <button v-if="!administration"  @click="addToCart(searchArticle.id)"> Add to cart </button>
       </div>
 
     </div>
